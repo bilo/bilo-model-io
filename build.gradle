@@ -1,0 +1,69 @@
+apply plugin: 'java-library'
+apply plugin: 'maven'
+
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'org.ajoberstar:grgit:1.4.+'
+  }
+}
+
+ext {
+  git = org.ajoberstar.grgit.Grgit.open()
+  gitVersion = "${git.describe()}"
+}
+
+group = "world.bilo"
+version = gitVersion
+
+sourceCompatibility = 1.7
+
+repositories {
+  jcenter()
+  mavenLocal() 
+}
+
+dependencies {
+  compile 'world.bilo:bilo-stack:1.0.0'
+  testCompile 'junit:junit:4.+'
+  testCompile 'org.mockito:mockito-core:2.+'
+  testRuntime 'org.mockito:mockito-core:2.+'
+}
+
+sourceSets {
+  main {
+    java {
+      srcDir 'src'
+    }
+  }
+  test {
+    java {
+      srcDirs = ["test/unit", "test/common"] 
+    }
+  }
+  acceptanceTest {
+    java {
+      srcDirs = ["test/acceptance", "test/common", "src"] 
+    }
+  }
+}
+
+configurations {
+  acceptanceTestCompile.extendsFrom compile, testCompile
+  acceptanceTestRuntime.extendsFrom runtime, testRuntime
+}
+
+task acceptanceTest(type:Test, dependsOn: assemble) {
+  description = "run acceptance tests"
+  testClassesDir = project.sourceSets.acceptanceTest.output.classesDir
+  classpath = project.sourceSets.acceptanceTest.runtimeClasspath
+}
+
+jar {
+    manifest {
+        attributes('Implementation-Title': project.name,
+                   'Implementation-Version': project.version)
+    }
+}
